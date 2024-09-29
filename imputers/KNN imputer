@@ -1,0 +1,59 @@
+from sklearn.impute import KNNImputer
+
+def knn_impute(df, n_neighbors=5):   
+    df_encoded = df.copy()
+    for col in df_encoded.select_dtypes(include='object').columns:
+        df_encoded[col] = df_encoded[col].astype('category').cat.codes
+    knn_imputer = KNNImputer(n_neighbors=n_neighbors)
+    df_imputed = pd.DataFrame(knn_imputer.fit_transform(df_encoded), columns=df_encoded.columns)
+    for col in df.select_dtypes(include='object').columns:
+        df_imputed[col] = df_imputed[col].round().astype(int).map(
+            dict(enumerate(df[col].astype('category').cat.categories)))
+    return df_imputed
+
+## function calling
+
+df_train_imputed = knn_impute(df_train, n_neighbors=25)
+df_test_imputed = knn_impute(df_test, n_neighbors=25)
+
+
+
+'''
+1. First Part: Working with a Copy (df_encoded)
+
+This is done at the start of the function to encode the categorical variables and perform KNN imputation without modifying the original df:
+
+df_encoded = df.copy()
+for col in df_encoded.select_dtypes(include='object').columns:
+    df_encoded[col] = df_encoded[col].astype('category').cat.codes
+
+Purpose:
+	•	We create a copy df_encoded because KNN imputation can only work with numerical data. Categorical features (those of type object) are encoded as integers using .cat.codes, converting them into numerical form.
+	•	This way, we keep the original DataFrame df untouched, avoiding any accidental changes.
+
+KNN Imputation:
+  knn_imputer = KNNImputer(n_neighbors=n_neighbors)
+  df_imputed = pd.DataFrame(knn_imputer.fit_transform(df_encoded), columns=df_encoded.columns)
+
+  •	Here, we apply KNN imputation on the encoded DataFrame (df_encoded) to fill in missing values.
+
+2. Second Part: Using the Original DataFrame (df)
+
+After the imputation, we use the original DataFrame (df) to map the imputed integer-encoded categorical values back to their original categorical values:
+
+for col in df.select_dtypes(include='object').columns:
+    df_imputed[col] = df_imputed[col].round().astype(int).map(
+        dict(enumerate(df[col].astype('category').cat.categories)))
+
+Why use the original df?
+	•	After imputation, we have filled missing values for categorical columns, but those values are still integer-encoded (because they were encoded as numbers for KNN imputation).
+	•	To restore the original categorical labels (like 'Ford', 'Tesla', etc.), we need to refer back to the original data in df. The original DataFrame holds the mapping of category labels to their integer codes.
+
+What happens here?
+	•	We use the original df to map the encoded integers back to their original categories.
+	•	For each categorical column in df, we retrieve the original categories using .cat.categories, build a dictionary mapping the integer codes back to the original categories, and then apply this mapping to df_imputed using .map().
+
+Why Do We Switch Between Copy and Original?
+	•	Copy (df_encoded): We use it for safe encoding and imputation without changing the original data structure or values.
+	•	Original (df): Once the imputation is done, we refer back to the original DataFrame for restoring the original categorical labels. This step doesn’t modify the original DataFrame but simply uses it for the mapping process.
+'''
