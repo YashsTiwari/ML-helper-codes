@@ -1,0 +1,8 @@
+from sklearn.preprocessing import LabelEncoder,OrdinalEncoder
+
+cat_cols_train = df_train_imputed.select_dtypes(include=['object']).columns
+cat_cols_train = cat_cols_train[cat_cols_train != 'class']
+ordinal_encoder = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-1)
+
+df_train_imputed[cat_cols_train] = ordinal_encoder.fit_transform(df_train_imputed[cat_cols_train].astype(str))
+df_test_imputed[cat_cols_train] = ordinal_encoder.transform(df_test_imputed[cat_cols_train].astype(str))
