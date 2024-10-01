@@ -1,0 +1,12 @@
+from sklearn.impute import IterativeImputer
+
+imputer=IterativeImputer(max_iter=10, tol=1e-3, random_state=0)
+df_train[['Horsepower', 'Liters_engine']] = imputer.fit_transform(df_train[['Horsepower', 'Liters_engine']])
+df_test[['Horsepower', 'Liters_engine']] = imputer.transform(df_test[['Horsepower', 'Liters_engine']])
+
+
+'''
+starts with filling all nan values with mean, than uses it as the base model and 
+moving from left to right tries to find the value to replace nan value, 
+this iteration keeps going on till the model stop improving much (can set up the no of iterations)
+'''
